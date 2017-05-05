@@ -31,6 +31,14 @@ public class Rule implements Serializable {
 		private LinkedList<CardDraw> CardDraw = new LinkedList<CardDraw>();
 		private eGame Game;
 
+		public TreeMap getHmCardDraw() {
+			return hmCardDraw;
+		}
+
+		public void setHmCardDraw(TreeMap hmCardDraw) {
+			this.hmCardDraw = hmCardDraw;
+		}
+
 		public Rule(eGame gme) {
 			this.Game = gme;
 			switch (gme) {

@@ -2,28 +2,20 @@ package pkgPoker.app.model;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 import netgame.common.Hub;
 import pkgPokerBLL.Action;
-import pkgPokerBLL.Card;
 import pkgPokerBLL.CardDraw;
 import pkgPokerBLL.Deck;
 import pkgPokerBLL.GamePlay;
-import pkgPokerBLL.GamePlayPlayerHand;
 import pkgPokerBLL.Player;
 import pkgPokerBLL.Rule;
 import pkgPokerBLL.Table;
-
-import pkgPokerEnum.eAction;
 import pkgPokerEnum.eCardDestination;
 import pkgPokerEnum.eDrawCount;
-import pkgPokerEnum.eGame;
-import pkgPokerEnum.eGameState;
 
 public class PokerHub extends Hub {
 
@@ -57,7 +49,7 @@ public class PokerHub extends Hub {
 				resetOutput();
 				sendToAll(HubPokerTable);
 				break;
-			case Leave:			
+			case Leave:
 				HubPokerTable.RemovePlayerFromTable(actPlayer);
 				resetOutput();
 				sendToAll(HubPokerTable);
@@ -67,41 +59,72 @@ public class PokerHub extends Hub {
 				sendToAll(HubPokerTable);
 				break;
 			case StartGame:
-				// Get the rule from the Action object.
+
 				Rule rle = new Rule(act.geteGame());
-				
-				//TODO Lab #5 - If neither player has 'the button', pick a random player
-				//		and assign the button.				
 
-				//TODO Lab #5 - Start the new instance of GamePlay
-								
-				// Add Players to Game
-				
-				// Set the order of players
-				
+				if (HubGamePlay == null) {
+					HubGamePlay = new GamePlay(rle, actPlayer.getPlayerID());
 
+				}
+
+				HubGamePlay.setGameDeck(new Deck(rle.GetNumberOfJokers(), rle.GetWildCards()));
+
+				ArrayList<Player> players = new ArrayList<Player>(HubPokerTable.getHmPlayer().values());
+
+				HashMap<UUID, Player> playersMap = new HashMap<UUID, Player>();
+
+				for (Player p : players) {
+					playersMap.put(p.getPlayerID(), p);
+				}
+
+				HubGamePlay.setGamePlayers(playersMap);
+
+				for (Player p : players) {
+					HubGamePlay.addPlayerToGame(p);
+
+					HubGamePlay.setiActOrder(HubGamePlay.GetOrder(p.getiPlayerPosition()));
+				}
 
 			case Draw:
 
-				//TODO Lab #5 -	Draw card(s) for each player in the game.
-				//TODO Lab #5 -	Make sure to set the correct visiblity
-				//TODO Lab #5 -	Make sure to account for community cards
+				HubGamePlay.getRule().GetDrawCard(eDrawCount.geteDrawCount(iDealNbr));
 
-				//TODO Lab #5 -	Check to see if the game is over
-				HubGamePlay.isGameOver();
+				TreeMap<Integer, CardDraw> tree = HubGamePlay.getRule().getHmCardDraw();
 				
+
+				CardDraw cd = tree.get( (Integer) this.iDealNbr);
+
+				eCardDestination destin = cd.getCardDestination();
+
+				if (destin == eCardDestination.Player) {
+					players = (ArrayList) HubGamePlay.getGamePlayers().values();
+
+					for (Player p : players) {
+						for (int i = 0; i <= cd.getCardCount().ordinal(); i++) {
+							HubGamePlay.getPlayerHand(p).AddCardToHand(HubGamePlay.getGameDeck().Draw());
+						}
+
+					}
+				} else if (destin == eCardDestination.Community) {
+					for (int i = 0; i <= cd.getCardCount().ordinal(); i++) {
+						HubGamePlay.getGameCommonHand().AddCardToHand(HubGamePlay.getGameDeck().Draw());
+					}
+				}
+
+				this.iDealNbr++;
+
+				HubGamePlay.isGameOver();
+
 				resetOutput();
-				//	Send the state of the gameplay back to the clients
 				sendToAll(HubGamePlay);
 				break;
 			case ScoreGame:
-				// Am I at the end of the game?
 
 				resetOutput();
 				sendToAll(HubGamePlay);
 				break;
 			}
-			
+
 		}
 
 	}

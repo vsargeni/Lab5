@@ -1,17 +1,14 @@
 package pkgPoker.app.controller;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.UUID;
 
 import javafx.animation.FadeTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -22,12 +19,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import pkgPoker.app.MainApp;
-import pkgPokerEnum.eAction;
-import pkgPokerEnum.eGame;
 import pkgPokerBLL.Action;
+import pkgPokerBLL.Card;
 import pkgPokerBLL.GamePlay;
 import pkgPokerBLL.Player;
 import pkgPokerBLL.Table;
+import pkgPokerEnum.eAction;
+import pkgPokerEnum.eGame;
 
 public class PokerTableController implements Initializable {
 
@@ -178,54 +176,74 @@ public class PokerTableController implements Initializable {
 	}
 
 	public void Handle_TableState(Table HubPokerTable) {
+		// Set default state of the buttons/labels
+		getPlayerLabel(1).setText("");
+		getPlayerLabel(2).setText("");
+		getSitLeave(1).setVisible(true);
+		getSitLeave(2).setVisible(true);
+		getSitLeave(1).setText("Sit");
+		getSitLeave(2).setText("Sit");
 
 		Iterator it = HubPokerTable.getHmPlayer().entrySet().iterator();
-		lblPlayerPos1.setText("");
-		lblPlayerPos2.setText("");
-		btnPos1SitLeave.setText("Sit");
-		btnPos2SitLeave.setText("Sit");
-
-		if (HubPokerTable.getHmPlayer().size()> 0)
-		{
-			btnPos1SitLeave.setVisible(false);
-			btnPos2SitLeave.setVisible(false);
-		}
-
 		while (it.hasNext()) {
 			Map.Entry pair = (Map.Entry) it.next();
 			Player p = (Player) pair.getValue();
+			// Set the player label
+			getPlayerLabel(p.getiPlayerPosition()).setText(p.getPlayerName());
 
-			if (p.getiPlayerPosition() == 1) {
-				lblPlayerPos1.setText(p.getPlayerName());
-				btnPos1SitLeave.setText("Leave");
-
-			} else if (p.getiPlayerPosition() == 2) {
-				lblPlayerPos2.setText(p.getPlayerName());
-				btnPos2SitLeave.setText("Leave");
-			}
-
- 			ToggleButton btnSitLeave = getSitLeave(p.getiPlayerPosition());
-
+			// Am I the player
 			if (p.getiPokerClientID() == mainApp.getPlayer().getiPokerClientID()) {
-				btnSitLeave.setText("Leave");
-				btnSitLeave.setVisible(true);
+				getSitLeave(p.getiPlayerPosition()).setVisible(true);
+				getSitLeave(p.getiPlayerPosition()).setText("Leave");
 
-			} else {
-				btnSitLeave.setVisible(false);
-			} 
+				for (int a = 1; a < 3; a++) {
+					if (a != p.getiPlayerPosition())
+						getSitLeave(a).setVisible(false);
+				}
 
+			}
+			// I'm not the player, but someone is sitting in that spot
+			else {
+				getSitLeave(p.getiPlayerPosition()).setVisible(false);
+			}
 		}
 
 	}
 
 	public void Handle_GameState(GamePlay HubPokerGame) {
+		if (!hboxP1Cards.getChildren().isEmpty()) {
+			hboxP1Cards.getChildren().clear();
+			hboxP2Cards.getChildren().clear();
+		}
+
+		for (Player play : HubPokerGame.getGamePlayers().values()) {
+
+			for (Card cd : HubPokerGame.getPlayerHand(play).getCardsInHand()) {
+
+				if (play.getPlayerID().equals(mainApp.getPlayer().getPlayerID())) {
+					if (play.getiPlayerPosition() == 1) {
+						hboxP1Cards.getChildren().add(BuildImage(cd.getiCardNbr()));
+					} else if (play.getiPlayerPosition() == 2) {
+						hboxP2Cards.getChildren().add(BuildImage(cd.getiCardNbr()));
+					}
+				}
+
+				else {
+					if (play.getiPlayerPosition() == 1) {
+						hboxP1Cards.getChildren().add(BuildImage(0));
+					} else if (play.getiPlayerPosition() == 2) {
+						hboxP2Cards.getChildren().add(BuildImage(0));
+					}
+				}
+			}
+		}
 
 	}
 
 	private ImageView BuildImage(int iCardNbr) {
 		String strImgPath;
 		if (iCardNbr == 0) {
-			strImgPath = "/img/b2fv.png";
+			strImgPath = "/img/b1fv.png"; // blue cards ftw
 		} else {
 			strImgPath = "/img/" + iCardNbr + ".png";
 		}

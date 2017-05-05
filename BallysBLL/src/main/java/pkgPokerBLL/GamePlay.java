@@ -18,10 +18,8 @@ public class GamePlay implements Serializable {
 	// private UUID PlayerID_NextToAct = null;
 	private HashMap<UUID, Player> hmGamePlayers = new HashMap<UUID, Player>();
 	// private ArrayList<GamePlayPlayerHand> GamePlayerHand = new
-	// ArrayList<GamePlayPlayerHand>();
-
+	// ArrayList<GamePlayPlayerHand>()
 	private HashMap<UUID, Hand> hmPlayerHand = new HashMap<UUID, Hand>();
-
 	private Player PlayerCommon;
 	private Hand GameCommonHand;
 	private Rule rle;
